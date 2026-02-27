@@ -1,18 +1,11 @@
 const multer = require('multer');
-const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { uploadDir, maxFileSize } = require('../config/env');
+const path = require('path');
+const { maxFileSize } = require('../config/env');
 const ApiError = require('../utils/ApiError');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../', uploadDir));
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  },
-});
+// Use memory storage so it works on Vercel (read-only filesystem)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -31,5 +24,14 @@ const upload = multer({
   fileFilter,
   limits: { fileSize: maxFileSize },
 });
+
+// Attach a generated filename to the file object after upload
+upload._addFilename = (req, res, next) => {
+  if (req.file) {
+    const ext = path.extname(req.file.originalname);
+    req.file.filename = `${uuidv4()}${ext}`;
+  }
+  next();
+};
 
 module.exports = upload;

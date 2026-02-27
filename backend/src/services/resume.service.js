@@ -9,40 +9,35 @@ class ResumeService {
       user: userId,
       fileName: file.filename,
       originalName: file.originalname,
-      filePath: file.path,
       fileSize: file.size,
       mimeType: file.mimetype,
       status: 'uploaded',
     });
 
-    this.processResume(resume._id, file.path).catch((err) => {
-      logger.error(`Background resume processing failed: ${err.message}`);
-    });
-
-    return resume;
-  }
-
-  async processResume(resumeId, filePath) {
+    // Process synchronously — Vercel kills the function after response,
+    // so background processing would lose the file buffer.
     try {
-      await Resume.findByIdAndUpdate(resumeId, { status: 'processing' });
+      await Resume.findByIdAndUpdate(resume._id, { status: 'processing' });
 
-      const mlResult = await mlClient.extractResume(filePath);
+      const mlResult = await mlClient.extractResume(file.buffer, file.originalname);
 
-      await Resume.findByIdAndUpdate(resumeId, {
+      await Resume.findByIdAndUpdate(resume._id, {
         status: 'processed',
         extractedText: mlResult.text || '',
         extractedSkills: mlResult.skills || [],
         contactInfo: mlResult.contact_info || {},
       });
 
-      logger.info(`Resume ${resumeId} processed successfully`);
+      logger.info(`Resume ${resume._id} processed successfully`);
     } catch (error) {
-      await Resume.findByIdAndUpdate(resumeId, {
+      await Resume.findByIdAndUpdate(resume._id, {
         status: 'failed',
         processingError: error.message,
       });
-      throw error;
+      logger.error(`Resume processing failed: ${error.message}`);
     }
+
+    return Resume.findById(resume._id);
   }
 
   async getByUser(userId, { page = 1, limit = 10, search = '' }) {
@@ -84,8 +79,9 @@ class ResumeService {
     const resume = await Resume.findOne({ _id: resumeId, user: userId });
     if (!resume) throw ApiError.notFound('Resume not found');
 
-    await this.processResume(resume._id, resume.filePath);
-    return Resume.findById(resume._id);
+    throw ApiError.badRequest(
+      'Reprocessing requires re-uploading the file. Please upload the resume again.'
+    );
   }
 }
 

@@ -1,5 +1,4 @@
 const axios = require('axios');
-const fs = require('fs');
 const FormData = require('form-data');
 const { mlServiceUrl } = require('../config/env');
 const logger = require('../utils/logger');
@@ -13,10 +12,13 @@ class MLClientService {
     });
   }
 
-  async extractResume(filePath) {
+  async extractResume(fileBuffer, originalName) {
     try {
       const formData = new FormData();
-      formData.append('file', fs.createReadStream(filePath));
+      formData.append('file', fileBuffer, {
+        filename: originalName || 'resume.pdf',
+        contentType: 'application/pdf',
+      });
 
       const response = await this.client.post('/api/extract', formData, {
         headers: formData.getHeaders(),

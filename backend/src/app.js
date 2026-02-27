@@ -41,7 +41,7 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/', generalLimiter);
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// File uploads are handled in-memory (no disk storage) for Vercel compatibility
 
 app.get('/api/v1/health', (req, res) => {
   res.json({ success: true, message: 'SmartHire API is running', timestamp: new Date().toISOString() });
