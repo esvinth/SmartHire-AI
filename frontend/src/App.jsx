@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from './layouts/DashboardLayout';
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
@@ -6,6 +6,7 @@ import AdminRoute from './components/auth/AdminRoute';
 import LandingPage from './pages/user/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import NotFoundPage from './pages/NotFoundPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ResumeUploadPage from './pages/resume/ResumeUploadPage';
 import ResumeListPage from './pages/resume/ResumeListPage';
@@ -48,7 +49,7 @@ export default function App() {
         <Route path="/admin/courses" element={<AdminRoute><CourseManagement /></AdminRoute>} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
